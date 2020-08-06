@@ -1,0 +1,10 @@
+---
+
+- name: Install common tools
+  apt:
+    pkg: [
+      "build-essential",
+      "clang",
+      "libssl-dev"
+    ]
+    state: present
