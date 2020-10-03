@@ -1,0 +1,10 @@
+---
+
+- name: Install chromium packages
+  apt:
+    pkg: [
+      "chromium-browser",
+      "chromium-browser-l10n",
+      "chromium-codecs-ffmpeg"
+    ]
+    state: present

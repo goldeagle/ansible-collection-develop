@@ -1,8 +1,6 @@
-# Ansible Role: Rust
+# Ansible Role: Deno
 
-[![Build Status](https://travis-ci.org/geerlingguy/ansible-role-php-mysql.svg?branch=master)](https://travis-ci.org/geerlingguy/ansible-role-php-mysql)
-
-Installs Mtr (https://www.rust-lang.org/) support on Linux.
+Installs Deno (https://www.deno.land/) support on Linux.
 
 ## Requirements
 
@@ -20,7 +18,7 @@ NONE
 
     - hosts: all
       roles:
-        - { role: goldeagle.rust }
+        - { role: goldeagle.develop.deno }
 
 ## License
 

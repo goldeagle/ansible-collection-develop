@@ -1,6 +1,6 @@
-# Ansible Role: Go
+# Ansible Role: Chromium
 
-Installs Go (https://www.rust-lang.org/) support on Linux.
+Installs Chromium browser on Linux.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ NONE
 
     - hosts: all
       roles:
-        - { role: goldeagle.develop.go }
+        - { role: goldeagle.develop.chromium }
 
 ## License
 

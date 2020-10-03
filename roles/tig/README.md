@@ -1,6 +1,6 @@
 # Ansible Role: Tig
 
-Installs tig (https://www.mysql.com/) support on Linux.
+Installs tig (https://github.com/jonas/tig) support on Linux.
 
 ## Requirements
 

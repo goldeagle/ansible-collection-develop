@@ -3,14 +3,13 @@ dependencies: []
 
 galaxy_info:
   author: "Bison 'goldeagle' Fan"
-  description: "rust role"
+  description: "go role"
   company: "bitseed.cn"
   license: "license (Apache-2.0)"
   min_ansible_version: 2.9
   platforms:
     - name: centos
       versions:
-        - 7
         - 8
     - name: debian
       versions:
@@ -32,11 +31,6 @@ galaxy_info:
         - bionic
         - focal
   galaxy_tags:
-    - cli
+    - go
+    - golang
     - language
-    - wasm
-    - arm
-    - "cross-compiler"
-    - cargo
-    - rustup
-    - rust
