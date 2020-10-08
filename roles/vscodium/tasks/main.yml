@@ -1,0 +1,43 @@
+---
+
+- name: Check if vscodium is installed.
+  stat:
+    path: "/usr/local/codium"
+  register: codium_bin
+
+- name: Download vscodium file
+  get_url:
+    url: "{{ vscodium_dist_url }}"
+    dest: "{{ vscodium_tmp_file }}"
+    mode: "0644"
+    checksum: "sha256:{{ vscodium_sha256sum }}"
+  when:
+    - not codium_bin.stat.exists
+
+- name: Make vscodium directory
+  file:
+    path: "{{ vscodium_install_path }}"
+    state: directory
+    mode: 0755
+
+- name: Install vscodium
+  shell: "tar -C {{ vscodium_install_path }} -xzf {{ vscodium_tmp_file }}"
+  when:
+    - not codium_bin.stat.exists
+
+- name: Link vscodium path
+  file:
+    src: "{{ vscodium_install_path }}/bin/codium"
+    dest: "/usr/local/bin/codium"
+    mode: 0755
+    state: link
+
+- name: Copy vscodium desktop entrance files
+  copy:
+    src: "vscodium.desktop"
+    dest: "/usr/share/applications/vscodium.desktop"
+
+- name: Cleanup vscodium template file
+  file:
+    path: "{{ vscodium_tmp_file }}"
+    state: absent
