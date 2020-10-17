@@ -2,7 +2,7 @@
 
 - name: Check if vscodium is installed.
   stat:
-    path: "/usr/local/codium"
+    path: "/usr/local/bin/codium"
   register: codium_bin
 
 - name: Download vscodium file
