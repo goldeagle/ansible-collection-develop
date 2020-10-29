@@ -1,0 +1,4 @@
+---
+
+rust_rustup_dist_server: "https://mirrors.ustc.edu.cn/rust-static"
+rust_rustup_update_root: "https://mirrors.ustc.edu.cn/rust-static/rustup"

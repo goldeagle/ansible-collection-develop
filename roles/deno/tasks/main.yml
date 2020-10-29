@@ -1,9 +1,14 @@
 ---
 
-- name: Check if cargo is installed.
+- name: Check if deno is installed.
   stat:
-    path: "/home/{{ ansible_user }}/.deno/bin/cargo"
+    path: "/usr/local/deno"
   register: deno_bin
+
+- name: Install curl
+  apt:
+    name: curl
+    state: present
 
 - name: Copy deno install script file
   copy:
@@ -14,7 +19,7 @@
     - not deno_bin.stat.exists
 
 - name: Install deno
-  shell: "RUSTUP_UPDATE_ROOT={{ rust.rustup_update_root }} /home/{{ ansible_user }}/rustup-init.sh"
+  shell: "/home/{{ ansible_user }}/deno-install.sh"
   when:
     - not deno_bin.stat.exists
 

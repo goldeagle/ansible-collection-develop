@@ -5,23 +5,9 @@
     path: "/home/{{ ansible_user }}/.cargo/bin/cargo"
   register: cargo_bin
 
-- name: Copy rust install script file
-  copy:
-    src: rustup-init.sh
-    dest: "/home/{{ ansible_user }}/"
-    mode: "0755"
-  when:
-    - not cargo_bin.stat.exists
-
-- name: Install rust
-  shell: "RUSTUP_UPDATE_ROOT={{ rust.rustup_update_root }} /home/{{ ansible_user }}/rustup-init.sh"
-  when:
-    - not cargo_bin.stat.exists
-
-- name: Remove rust install script
-  file:
-    path: "/home/{{ ansible_user }}/rust-init.sh"
-    state: absent
+- name: Create cargo user directory
+  shell: "mkdir -p /home/{{ ansible_user }}/.cargo/bin"
+  become: false
   when:
     - not cargo_bin.stat.exists
 
@@ -29,6 +15,30 @@
   copy:
     src: config
     dest: "/home/{{ ansible_user }}/.cargo/config"
-    mode: "0644"
+    mode: "0755"
   when:
     - not cargo_bin.stat.exists
+
+- name: Copy rust install script file
+  copy:
+    src: rustup-init.sh
+    dest: "/home/{{ ansible_user }}/rustup-init.sh"
+    mode: "0755"
+  become: false
+  when:
+    - not cargo_bin.stat.exists
+
+- name: Install Rust
+  shell: "/home/{{ ansible_user }}/rustup-init.sh -y"
+  become: false
+  when:
+    - not cargo_bin.stat.exists
+
+- name: Remove rust install script
+  file:
+    path: "/home/{{ ansible_user }}/rustup-init.sh"
+    state: absent
+  when:
+    - not cargo_bin.stat.exists
+  
+  
