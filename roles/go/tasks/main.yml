@@ -7,7 +7,7 @@
 
 - name: Download golang file
   get_url:
-    url: "https://golang.google.cn/dl/go{{ version }}.linux-amd64.tar.gz"
+    url: "https://golang.google.cn/dl/go{{ go_version }}.linux-amd64.tar.gz"
     dest: "/tmp/go.tar.gz"
     mode: "0644"
   when:
