@@ -5,6 +5,9 @@
     pkg: [
       "build-essential",
       "clang",
-      "libssl-dev"
+      "libssl-dev",
+      "cmake",
+      "ninja-build",
+      "cmake-cureses-gui"
     ]
     state: present
