@@ -1,0 +1,17 @@
+---
+
+- name: Get cmake source codes
+  git:
+    repo:  "https://gitee.com/bison-fork/CMake"
+    dest: "/tmp/cmake"
+    update: yes
+
+- name: Compile & install cmake
+  shell:
+    cmd: "./bootstrap && make && make install"
+    chdir: "/tmp/cmake"
+
+- name: Remove cmake temporary directory
+  file:
+    path: "/tmp/cmake"
+    state: absent

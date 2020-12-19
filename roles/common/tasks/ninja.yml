@@ -1,0 +1,22 @@
+---
+
+- name: Get ninja source codes
+  git:
+    repo:  "https://gitee.com/bison-fork/ninja"
+    dest: "/tmp/ninja"
+    update: yes
+
+- name: Compile ninja
+  shell:
+    cmd: "cmake -Bbuild-cmake -H. && cmake --build build-cmake"
+    chdir: "/tmp/ninja"
+
+- name: Install ninja
+  copy:
+    src: "/tmp/ninja/build-cmake/ninja"
+    dest: "/usr/local/bin/ninja"
+
+- name: Remove ninja temporary directory
+  file:
+    path: "/tmp/ninja"
+    state: absent

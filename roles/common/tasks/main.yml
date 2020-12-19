@@ -5,9 +5,20 @@
     pkg: [
       "build-essential",
       "clang",
-      "libssl-dev",
-      "cmake",
-      "ninja-build",
-      "cmake-cureses-gui"
+      "libssl-dev"
     ]
     state: present
+
+- name: Remove system installed cmake & ninja-build
+  apt:
+    pkg: [
+      "cmake",
+      "ninja-build"
+    ]
+    state: absent
+
+- name: Install cmake
+  include_tasks: "cmake.yml"
+
+- name: Install ninja
+  include_tasks: "ninja.yml"
