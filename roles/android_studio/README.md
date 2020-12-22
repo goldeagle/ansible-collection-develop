@@ -1,6 +1,6 @@
-# Ansible Role: Go
+# Ansible Role: Android Studio
 
-Installs VSCodium (https://www.vscodium.com/) support on Linux.
+Installs Android Studio support on Linux.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ NONE
 
     - hosts: all
       roles:
-        - { role: goldeagle.develop.vscodium }
+        - { role: goldeagle.develop.android_studio }
 
 ## License
 

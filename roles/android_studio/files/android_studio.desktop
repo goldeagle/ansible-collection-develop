@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Android Studio
+Icon=/opt/android-studio/bin/studio.png
+Exec="/usr/local/bin/studio" %f
+Comment=Android Studio IDE
+Categories=Development;IDE;Editor;
+Terminal=false

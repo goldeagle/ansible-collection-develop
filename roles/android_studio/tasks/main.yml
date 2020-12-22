@@ -1,0 +1,27 @@
+---
+- name: Download android_studio file
+  get_url:
+    url: "{{ android_studio_dist_url }}"
+    dest: "{{ android_studio_tmp_file }}"
+    mode: "0644"
+
+- name: Install android_studio
+  shell: "tar -C /opt -xzf {{ android_studio_tmp_file }}"
+
+- name: Link android_studio path
+  file:
+    src: "/opt/android-studio/bin/studio.sh"
+    dest: "/usr/local/bin/studio"
+    mode: 0755
+    state: link
+    force: yes
+
+- name: Copy android_studio desktop entrance files
+  copy:
+    src: "android_studio.desktop"
+    dest: "/usr/share/applications/android_studio.desktop"
+
+- name: Cleanup android_studio template file
+  file:
+    path: "{{ android_studio_tmp_file }}"
+    state: absent

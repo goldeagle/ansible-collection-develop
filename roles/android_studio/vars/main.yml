@@ -1,0 +1,5 @@
+---
+
+android_studio_version: "4.1.1"
+android_studio_dist_url: "https://dl.google.com/dl/android/studio/ide-zips/4.1.1.0/android-studio-ide-201.6953283-linux.tar.gz"
+android_studio_tmp_file: "/tmp/as.tar.gz"

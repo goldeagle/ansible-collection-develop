@@ -1,6 +1,6 @@
 # Ansible Role: Go
 
-Installs Go (https://www.rust-lang.org/) support on Linux.
+Installs Go (https://www.golang.org/) support on Linux.
 
 ## Requirements
 
