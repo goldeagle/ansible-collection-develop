@@ -4,7 +4,6 @@
     url: "{{ vscodium_dist_url }}"
     dest: "{{ vscodium_tmp_file }}"
     mode: "0644"
-    checksum: "sha256:{{ vscodium_sha256sum }}"
 
 - name: Make vscodium directory
   file:

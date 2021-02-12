@@ -1,7 +1,6 @@
 ---
 
-vscodium_version: "1.52.1"
+vscodium_version: "1.53.1"
 vscodium_dist_url: "https://mirrors.tuna.tsinghua.edu.cn/github-release/VSCodium/vscodium/{{ vscodium_version }}/VSCodium-linux-x64-{{ vscodium_version }}.tar.gz"
-vscodium_sha256sum: "eb54644218fabd7f48dcdb99656376636ec23ddd49dd1b910d10bdbdd3116fb2"
 vscodium_tmp_file: "/tmp/codium.tar.gz"
 vscodium_install_path: "/opt/vscodium"
