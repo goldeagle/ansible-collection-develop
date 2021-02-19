@@ -1,0 +1,36 @@
+---
+
+- name: Check if golang is installed.
+  stat:
+    path: "/usr/local/go/bin/go"
+  register: go_bin
+
+- name: Download golang file
+  get_url:
+    url: "https://golang.google.cn/dl/go{{ go_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/go.tar.gz"
+    mode: "0644"
+  when:
+    - not go_bin.stat.exists
+
+- name: Install golang
+  shell: "tar -C /usr/local -xzf /tmp/go.tar.gz"
+  when:
+    - not go_bin.stat.exists
+
+- name: Link golang path
+  file:
+    src: "/usr/local/go/bin/go"
+    dest: "/usr/local/bin/go"
+    state: link
+
+- name: Link golang path
+  file:
+    src: "/usr/local/go/bin/gofmt"
+    dest: "/usr/local/bin/gofmt"
+    state: link
+
+- name: Cleanup golang tar file
+  file:
+    path: "/tmp/go.tar.gz"
+    state: absent
