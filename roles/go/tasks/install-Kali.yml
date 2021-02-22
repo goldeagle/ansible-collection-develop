@@ -14,7 +14,7 @@
     - not go_bin.stat.exists
 
 - name: Install golang
-  shell: "tar -C /usr/local -xzf /tmp/go.tar.gz"
+  shell: "tar xzf /tmp/go.tar.gz -C /usr/local"
   when:
     - not go_bin.stat.exists
 
