@@ -1,4 +1,4 @@
 ---
 
-cmake_versoin: 1.19.2
+cmake_version: 3.21.1
 ninja_version: 1.10.2
