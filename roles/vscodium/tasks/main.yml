@@ -11,13 +11,19 @@
     state: directory
     mode: 0755
 
+- name: Make vscodium runtime directory
+  file:
+    path: "{{ vscodium_runtime_path }}"
+    state: directory
+    mode: 0755
+
 - name: Install vscodium
   shell: "tar -C {{ vscodium_install_path }} -xzf {{ vscodium_tmp_file }}"
 
 - name: Link vscodium path
   file:
     src: "{{ vscodium_install_path }}/bin/codium"
-    dest: "/usr/local/bin/codium"
+    dest: "{{ vscodium_runtime_path }}/codium"
     mode: 0755
     state: link
 
