@@ -2,7 +2,7 @@
 
 - name: Check if deno is installed.
   stat:
-    path: "/usr/local/deno"
+    path: "/usr/local/bin/deno"
   register: deno_bin
 
 - name: Install curl

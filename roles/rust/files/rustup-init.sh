@@ -8,6 +8,15 @@
 # It runs on Unix shells like {a,ba,da,k,z}sh. It uses the common `local`
 # extension. Note: Most shells limit `local` to 1 var per line, contra bash.
 
+if [ "$KSH_VERSION" = 'Version JM 93t+ 2010-03-05' ]; then
+    # The version of ksh93 that ships with many illumos systems does not
+    # support the "local" extension.  Print a message rather than fail in
+    # subtle ways later on:
+    echo 'rustup does not work with this ksh93 version; please try bash!' >&2
+    exit 1
+fi
+
+
 set -u
 
 # If RUSTUP_UPDATE_ROOT is unset or empty, default it.
@@ -16,7 +25,7 @@ RUSTUP_UPDATE_ROOT="${RUSTUP_UPDATE_ROOT:-https://static.rust-lang.org/rustup}"
 #XXX: If you change anything here, please make the same changes in setup_mode.rs
 usage() {
     cat 1>&2 <<EOF
-rustup-init 1.22.1 (76644d669 2020-07-08)
+rustup-init 1.24.3 (c1c769109 2021-05-31)
 The installer for rustup
 
 USAGE:
@@ -63,7 +72,7 @@ main() {
     local _url="${RUSTUP_UPDATE_ROOT}/dist/${_arch}/rustup-init${_ext}"
 
     local _dir
-    _dir="$(mktemp -d 2>/dev/null || ensure mktemp -d -t rustup)"
+    _dir="$(ensure mktemp -d)"
     local _file="${_dir}/rustup-init${_ext}"
 
     local _ansi_escapes_are_valid=false
@@ -131,6 +140,14 @@ main() {
     return "$_retval"
 }
 
+check_proc() {
+    # Check for /proc by looking for the /proc/self/exe link
+    # This is only run on Linux
+    if ! test -L /proc/self/exe ; then
+        err "fatal: Unable to find /proc/self/exe.  Is /proc mounted?  Installation cannot proceed without /proc."
+    fi
+}
+
 get_bitness() {
     need_cmd head
     # Architecture detection without dependencies beyond coreutils.
@@ -148,6 +165,17 @@ get_bitness() {
     else
         err "unknown platform bitness"
     fi
+}
+
+is_host_amd64_elf() {
+    need_cmd head
+    need_cmd tail
+    # ELF e_machine detection without dependencies beyond coreutils.
+    # Two-byte field at offset 0x12 indicates the CPU,
+    # but we're interested in it being 0x3E to indicate amd64, or not that.
+    local _current_exe_machine
+    _current_exe_machine=$(head -c 19 /proc/self/exe | tail -c 1)
+    [ "$_current_exe_machine" = "$(printf '\076')" ]
 }
 
 get_endianness() {
@@ -192,6 +220,24 @@ get_architecture() {
         fi
     fi
 
+    if [ "$_ostype" = SunOS ]; then
+        # Both Solaris and illumos presently announce as "SunOS" in "uname -s"
+        # so use "uname -o" to disambiguate.  We use the full path to the
+        # system uname in case the user has coreutils uname first in PATH,
+        # which has historically sometimes printed the wrong value here.
+        if [ "$(/usr/bin/uname -o)" = illumos ]; then
+            _ostype=illumos
+        fi
+
+        # illumos systems have multi-arch userlands, and "uname -m" reports the
+        # machine hardware name; e.g., "i86pc" on both 32- and 64-bit x86
+        # systems.  Check for the native (widest) instruction set on the
+        # running kernel:
+        if [ "$_cputype" = i86pc ]; then
+            _cputype="$(isainfo -n)"
+        fi
+    fi
+
     case "$_ostype" in
 
         Android)
@@ -199,6 +245,7 @@ get_architecture() {
             ;;
 
         Linux)
+            check_proc
             _ostype=unknown-linux-$_clibtype
             _bitness=$(get_bitness)
             ;;
@@ -217,6 +264,10 @@ get_architecture() {
 
         Darwin)
             _ostype=apple-darwin
+            ;;
+
+        illumos)
+            _ostype=unknown-illumos
             ;;
 
         MINGW* | MSYS* | CYGWIN*)
@@ -260,7 +311,7 @@ get_architecture() {
             fi
             ;;
 
-        aarch64)
+        aarch64 | arm64)
             _cputype=aarch64
             ;;
 
@@ -307,7 +358,24 @@ get_architecture() {
     if [ "${_ostype}" = unknown-linux-gnu ] && [ "${_bitness}" -eq 32 ]; then
         case $_cputype in
             x86_64)
-                _cputype=i686
+                if [ -n "${RUSTUP_CPUTYPE:-}" ]; then
+                    _cputype="$RUSTUP_CPUTYPE"
+                else {
+                    # 32-bit executable for amd64 = x32
+                    if is_host_amd64_elf; then {
+                         echo "This host is running an x32 userland; as it stands, x32 support is poor," 1>&2
+                         echo "and there isn't a native toolchain -- you will have to install" 1>&2
+                         echo "multiarch compatibility with i686 and/or amd64, then select one" 1>&2
+                         echo "by re-running this script with the RUSTUP_CPUTYPE environment variable" 1>&2
+                         echo "set to i686 or x86_64, respectively." 1>&2
+                         echo 1>&2
+                         echo "You will be able to add an x32 target after installation by running" 1>&2
+                         echo "  rustup target add x86_64-unknown-linux-gnux32" 1>&2
+                         exit 1
+                    }; else
+                        _cputype=i686
+                    fi
+                }; fi
                 ;;
             mips64)
                 _cputype=$(get_endianness mips '' el)
@@ -386,6 +454,8 @@ ignore() {
 downloader() {
     local _dld
     local _ciphersuites
+    local _err
+    local _status
     if check_cmd curl; then
         _dld=curl
     elif check_cmd wget; then
@@ -400,30 +470,50 @@ downloader() {
         get_ciphersuites_for_curl
         _ciphersuites="$RETVAL"
         if [ -n "$_ciphersuites" ]; then
-            curl --proto '=https' --tlsv1.2 --ciphers "$_ciphersuites" --silent --show-error --fail --location "$1" --output "$2"
+            _err=$(curl --proto '=https' --tlsv1.2 --ciphers "$_ciphersuites" --silent --show-error --fail --location "$1" --output "$2" 2>&1)
+            _status=$?
         else
             echo "Warning: Not enforcing strong cipher suites for TLS, this is potentially less secure"
             if ! check_help_for "$3" curl --proto --tlsv1.2; then
                 echo "Warning: Not enforcing TLS v1.2, this is potentially less secure"
-                curl --silent --show-error --fail --location "$1" --output "$2"
+                _err=$(curl --silent --show-error --fail --location "$1" --output "$2" 2>&1)
+                _status=$?
             else
-                curl --proto '=https' --tlsv1.2 --silent --show-error --fail --location "$1" --output "$2"
+                _err=$(curl --proto '=https' --tlsv1.2 --silent --show-error --fail --location "$1" --output "$2" 2>&1)
+                _status=$?
             fi
         fi
+        if [ -n "$_err" ]; then
+            echo "$_err" >&2
+            if echo "$_err" | grep -q 404$; then
+                err "installer for platform '$3' not found, this may be unsupported"
+            fi
+        fi
+        return $_status
     elif [ "$_dld" = wget ]; then
         get_ciphersuites_for_wget
         _ciphersuites="$RETVAL"
         if [ -n "$_ciphersuites" ]; then
-            wget --https-only --secure-protocol=TLSv1_2 --ciphers "$_ciphersuites" "$1" -O "$2"
+            _err=$(wget --https-only --secure-protocol=TLSv1_2 --ciphers "$_ciphersuites" "$1" -O "$2" 2>&1)
+            _status=$?
         else
             echo "Warning: Not enforcing strong cipher suites for TLS, this is potentially less secure"
             if ! check_help_for "$3" wget --https-only --secure-protocol; then
                 echo "Warning: Not enforcing TLS v1.2, this is potentially less secure"
-                wget "$1" -O "$2"
+                _err=$(wget "$1" -O "$2" 2>&1)
+                _status=$?
             else
-                wget --https-only --secure-protocol=TLSv1_2 "$1" -O "$2"
+                _err=$(wget --https-only --secure-protocol=TLSv1_2 "$1" -O "$2" 2>&1)
+                _status=$?
             fi
         fi
+        if [ -n "$_err" ]; then
+            echo "$_err" >&2
+            if echo "$_err" | grep -q ' 404 Not Found$'; then
+                err "installer for platform '$3' not found, this may be unsupported"
+            fi
+        fi
+        return $_status
     else
         err "Unknown downloader"   # should not reach here
     fi
@@ -438,24 +528,43 @@ check_help_for() {
     _cmd="$1"
     shift
 
+    local _category
+    if "$_cmd" --help | grep -q 'For all options use the manual or "--help all".'; then
+      _category="all"
+    else
+      _category=""
+    fi
+
     case "$_arch" in
 
-        # If we're running on OS-X, older than 10.13, then we always
-        # fail to find these options to force fallback
         *darwin*)
         if check_cmd sw_vers; then
-            if [ "$(sw_vers -productVersion | cut -d. -f2)" -lt 13 ]; then
-                # Older than 10.13
-                echo "Warning: Detected OS X platform older than 10.13"
-                return 1
-            fi
+            case $(sw_vers -productVersion) in
+                10.*)
+                    # If we're running on macOS, older than 10.13, then we always
+                    # fail to find these options to force fallback
+                    if [ "$(sw_vers -productVersion | cut -d. -f2)" -lt 13 ]; then
+                        # Older than 10.13
+                        echo "Warning: Detected macOS platform older than 10.13"
+                        return 1
+                    fi
+                    ;;
+                11.*)
+                    # We assume Big Sur will be OK for now
+                    ;;
+                *)
+                    # Unknown product version, warn and continue
+                    echo "Warning: Detected unknown macOS major version: $(sw_vers -productVersion)"
+                    echo "Warning TLS capabilities detection may fail"
+                    ;;
+            esac
         fi
         ;;
 
     esac
 
     for _arg in "$@"; do
-        if ! "$_cmd" --help | grep -q -- "$_arg"; then
+        if ! "$_cmd" --help $_category | grep -q -- "$_arg"; then
             return 1
         fi
     done
